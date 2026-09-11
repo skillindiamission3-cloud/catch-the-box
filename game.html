@@ -1,0 +1,347 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Catch the Box</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: linear-gradient(135deg, #050505, #151530);
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    min-height: 100vh;
+}
+
+/* HEADER */
+
+h1 {
+    margin: 15px 0;
+    font-size: 32px;
+}
+
+#info {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+/* GAME */
+
+#game {
+    width: min(500px, 95vw);
+    height: 600px;
+    margin: auto;
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at 50% 20%, #252550, #101020 60%, #050509);
+
+    border: 3px solid white;
+    border-radius: 15px;
+
+    box-shadow: 0 0 30px rgba(0,255,255,0.25);
+}
+
+/* STARS */
+
+.star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    border-radius: 50%;
+}
+
+/* PLAYER */
+
+#player {
+    width: 85px;
+    height: 25px;
+
+    background: linear-gradient(90deg, #00ff88, #00ffff);
+
+    position: absolute;
+    bottom: 25px;
+    left: calc(50% - 42px);
+
+    border-radius: 15px;
+
+    box-shadow: 0 0 15px #00ffff;
+}
+
+/* BOX */
+
+#box {
+    width: 35px;
+    height: 35px;
+
+    background: linear-gradient(135deg, #ff2222, #ff8800);
+
+    position: absolute;
+    top: -50px;
+    left: 100px;
+
+    border-radius: 8px;
+
+    box-shadow: 0 0 15px red;
+}
+
+/* START SCREEN */
+
+#startScreen,
+#gameOverScreen {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0,0,0,0.85);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 10;
+}
+
+#gameOverScreen {
+    display: none;
+}
+
+#startScreen h2,
+#gameOverScreen h2 {
+    font-size: 40px;
+    margin-bottom: 20px;
+}
+
+/* BUTTONS */
+
+button {
+    border: none;
+    border-radius: 10px;
+
+    padding: 12px 25px;
+
+    margin: 8px;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    background: linear-gradient(90deg, #00ffff, #00ff88);
+
+    color: #001010;
+
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.08);
+}
+
+/* PAUSE */
+
+#pauseButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    padding: 7px 12px;
+    font-size: 14px;
+
+    z-index: 5;
+}
+
+/* MOBILE CONTROLS */
+
+#mobileControls {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+
+    margin-top: 15px;
+}
+
+.controlButton {
+    width: 90px;
+    height: 55px;
+
+    font-size: 25px;
+
+    background: #222;
+    color: white;
+
+    border: 2px solid #00ffff;
+}
+
+/* INSTRUCTIONS */
+
+#instructions {
+    margin: 15px auto;
+    max-width: 500px;
+    font-size: 14px;
+    color: #bbb;
+}
+
+@media (min-width: 700px) {
+    #mobileControls {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎮 Catch the Box</h1>
+
+<div id="info">
+    <span>🏆 Score: <b id="score">0</b></span>
+    <span>❤️ Lives: <b id="lives">3</b></span>
+    <span>📈 Level: <b id="level">1</b></span>
+</div>
+
+<div id="game">
+
+    <button id="pauseButton" onclick="togglePause()">⏸️</button>
+
+    <div id="player"></div>
+    <div id="box"></div>
+
+    <!-- START SCREEN -->
+
+    <div id="startScreen">
+
+        <h2>🎮 Catch the Box</h2>
+
+        <p>Catch the falling boxes!</p>
+
+        <button onclick="startGame()">▶ START GAME</button>
+
+    </div>
+
+    <!-- GAME OVER -->
+
+    <div id="gameOverScreen">
+
+        <h2>💀 GAME OVER</h2>
+
+        <p>Your Score:</p>
+
+        <h3 id="finalScore">0</h3>
+
+        <p>🏆 High Score: <span id="highScore">0</span></p>
+
+        <button onclick="restartGame()">🔄 PLAY AGAIN</button>
+
+    </div>
+
+</div>
+
+<!-- MOBILE CONTROLS -->
+
+<div id="mobileControls">
+
+    <button class="controlButton"
+            onmousedown="moveLeft()"
+            ontouchstart="moveLeft()">
+        ⬅️
+    </button>
+
+    <button class="controlButton"
+            onmousedown="moveRight()"
+            ontouchstart="moveRight()">
+        ➡️
+    </button>
+
+</div>
+
+<div id="instructions">
+    💻 Use ← and → arrow keys to move.<br>
+    📱 On mobile, use the buttons below the game.
+</div>
+
+<script>
+
+/* =========================
+   GAME VARIABLES
+========================= */
+
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const box = document.getElementById("box");
+
+const scoreText = document.getElementById("score");
+const livesText = document.getElementById("lives");
+const levelText = document.getElementById("level");
+
+const startScreen = document.getElementById("startScreen");
+const gameOverScreen = document.getElementById("gameOverScreen");
+
+const finalScore = document.getElementById("finalScore");
+const highScoreText = document.getElementById("highScore");
+
+let playerX = 210;
+let boxX = 100;
+let boxY = -50;
+
+let score = 0;
+let lives = 3;
+let level = 1;
+
+let speed = 4;
+
+let gameRunning = false;
+let paused = false;
+
+let highScore = localStorage.getItem("catchBoxHighScore") || 0;
+
+highScoreText.innerText = highScore;
+
+
+/* =========================
+   CREATE STARS
+========================= */
+
+for (let i = 0; i < 50; i++) {
+
+    const star = document.createElement("div");
+
+    star.className = "star";
+
+    star.style.left =
+        Math.random() * 100 + "%";
+
+    star.style.top =
+        Math.random() * 100 + "%";
+
+    star.style.opacity =
+        Math.random();
+
+    game.appendChild(star);
+}
+
+
+/* =========================
+   KEYBOARD CONTROLS
+========================= */
+
+document.addEventListener("keydown", function(event) {
+
+    if (!gameRunning || paused) return;
+
+    if (event.key === "ArrowLeft") {
+```
